@@ -1,52 +1,24 @@
-name: GitHub VPS
+name: One-Click VPS (tmate)
 on: [workflow_dispatch]
 
 jobs:
-  vps:
+  ssh:
     runs-on: ubuntu-latest
+    timeout-minutes: 360   # up to 6 hours
     steps:
-      - name: Setup SSH
+      # Optional: preinstall anything you want on the VM
+      - name: Prep machine
         run: |
           sudo apt-get update
-          sudo apt-get install -y openssh-server wget unzip
-          sudo systemctl enable ssh
-          sudo systemctl start ssh
-          echo "root:password123" | sudo chpasswd
+          sudo apt-get install -y htop curl git
 
-      - name: Install ngrok
-        run: |
-          wget -q https://bin.equinox.io/c/bNyj1mQVY4c/ngrok-stable-linux-amd64.zip
-          unzip -o ngrok-stable-linux-amd64.zip
-          sudo mv ngrok /usr/local/bin/ngrok
+      # Start an interactive SSH session and print the connection strings
+      - name: Start tmate session
+        uses: mxschmitt/action-tmate@v3
+        with:
+          limit-access-to-actor: true   # only your GitHub account can connect
+          detached: true                # don’t block the job; session stays open
 
-      - name: Start ngrok tunnel
-        env:
-          NGROK_AUTH: ${{ secrets.NGROK_AUTH }}
-        run: |
-          ngrok authtoken $NGROK_AUTH
-          nohup ngrok tcp 22 --log=stdout > ngrok.log 2>&1 &
-          
-          # Wait for ngrok to write tunnel URL in log
-          for i in {1..30}; do
-            HOSTPORT=$(grep -m1 -o "tcp://[0-9a-zA-Z\.:\-]*" ngrok.log || true)
-            if [[ "$HOSTPORT" == tcp* ]]; then
-              break
-            fi
-            sleep 2
-          done
-          
-          HOST=$(echo $HOSTPORT | cut -d':' -f2 | sed 's#^//##')
-          PORT=$(echo $HOSTPORT | cut -d':' -f3)
-
-          echo "SSH command: ssh root@$HOST -p $PORT" >> $GITHUB_STEP_SUMMARY
-          echo "Password: password123" >> $GITHUB_STEP_SUMMARY
-
-          echo "====================================="
-          echo "SSH Host: $HOST"
-          echo "SSH Port: $PORT"
-          echo "User: root"
-          echo "Password: password123"
-          echo "====================================="
-
-      - name: Keep VPS Alive
+      # Keep the runner alive (tmate also keeps it, this is just extra safety)
+      - name: Keep alive
         run: sleep 21600
