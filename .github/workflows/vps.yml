@@ -8,7 +8,7 @@ jobs:
       - name: Setup SSH
         run: |
           sudo apt-get update
-          sudo apt-get install -y openssh-server wget unzip jq
+          sudo apt-get install -y openssh-server wget unzip
           sudo systemctl enable ssh
           sudo systemctl start ssh
           echo "root:password123" | sudo chpasswd
@@ -26,19 +26,14 @@ jobs:
           ngrok authtoken $NGROK_AUTH
           nohup ngrok tcp 22 --log=stdout > ngrok.log 2>&1 &
           
-          # Wait until tunnel is ready (check API up to 60s)
+          # Wait for ngrok to write tunnel URL in log
           for i in {1..30}; do
-            HOSTPORT=$(curl -s http://127.0.0.1:4040/api/tunnels | jq -r '.tunnels[0].public_url')
+            HOSTPORT=$(grep -m1 -o "tcp://[0-9a-zA-Z\.:\-]*" ngrok.log || true)
             if [[ "$HOSTPORT" == tcp* ]]; then
               break
             fi
             sleep 2
           done
-          
-          # Fallback: read from log if API fails
-          if [[ -z "$HOSTPORT" ]]; then
-            HOSTPORT=$(grep -m1 -o "tcp://[0-9a-zA-Z\.:\-]*" ngrok.log || true)
-          fi
           
           HOST=$(echo $HOSTPORT | cut -d':' -f2 | sed 's#^//##')
           PORT=$(echo $HOSTPORT | cut -d':' -f3)
