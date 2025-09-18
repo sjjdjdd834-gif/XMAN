@@ -4,21 +4,17 @@ on: [workflow_dispatch]
 jobs:
   ssh:
     runs-on: ubuntu-latest
-    timeout-minutes: 360   # up to 6 hours
+    timeout-minutes: 360   # keep alive up to 6 hours
     steps:
-      # Optional: preinstall anything you want on the VM
       - name: Prep machine
         run: |
           sudo apt-get update
           sudo apt-get install -y htop curl git
 
-      # Start an interactive SSH session and print the connection strings
       - name: Start tmate session
         uses: mxschmitt/action-tmate@v3
         with:
-          limit-access-to-actor: true   # only your GitHub account can connect
-          detached: true                # don’t block the job; session stays open
+          limit-access-to-actor: true   # only you can connect
 
-      # Keep the runner alive (tmate also keeps it, this is just extra safety)
       - name: Keep alive
         run: sleep 21600
