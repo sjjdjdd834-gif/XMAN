@@ -1,3 +1,7 @@
+name: GitHub VPS
+
+on: workflow_dispatch
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -18,7 +22,7 @@ jobs:
           echo "Web: $(tmate -S /tmp/tmate.sock display -p '#{tmate_web}')"
           echo "===================================="
           
-          # Also write to summary so you get it in the Summary tab
+          # Also write to summary so you get it in the Summary tab too
           echo "SSH: $(tmate -S /tmp/tmate.sock display -p '#{tmate_ssh}')" >> $GITHUB_STEP_SUMMARY
           echo "Web: $(tmate -S /tmp/tmate.sock display -p '#{tmate_web}')" >> $GITHUB_STEP_SUMMARY
 
