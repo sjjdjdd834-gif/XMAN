@@ -25,7 +25,7 @@ jobs:
         run: |
           ngrok authtoken $NGROK_AUTH
           nohup ngrok tcp 22 --log=stdout > ngrok.log 2>&1 &
-          sleep 10
+          sleep 8
           curl -s http://127.0.0.1:4040/api/tunnels | jq -r '.tunnels[0].public_url'
 
       - name: Keep VPS Alive
