@@ -1,0 +1,25 @@
+name: GitHub VPS
+
+on: [workflow_dispatch]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install SSH server
+        run: |
+          sudo apt update
+          sudo apt install -y openssh-server
+          sudo service ssh start
+
+      - name: Setup root password
+        run: |
+          echo "root:password123" | sudo chpasswd
+
+      - name: Expose to internet (via ngrok)
+        run: |
+          curl -s https://ngrok-agent.s3.amazonaws.com/ngrok.asc | sudo tee /etc/apt/trusted.gpg.d/ngrok.asc >/dev/null
+          echo "deb https://ngrok-agent.s3.amazonaws.com buster main" | sudo tee /etc/apt/sources.list.d/ngrok.list
+          sudo apt update && sudo apt install ngrok -y
+          ngrok config add-authtoken ${{ secrets.NGROK_AUTH }}
+          nohup ngrok tcp 22 &
