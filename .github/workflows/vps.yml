@@ -26,7 +26,17 @@ jobs:
           ngrok authtoken $NGROK_AUTH
           nohup ngrok tcp 22 --log=stdout > ngrok.log 2>&1 &
           sleep 8
-          curl -s http://127.0.0.1:4040/api/tunnels | jq -r '.tunnels[0].public_url'
+          HOSTPORT=$(curl -s http://127.0.0.1:4040/api/tunnels | jq -r '.tunnels[0].public_url')
+          HOST=$(echo $HOSTPORT | cut -d':' -f2 | sed 's#^//##')
+          PORT=$(echo $HOSTPORT | cut -d':' -f3)
+          echo "SSH command: ssh root@$HOST -p $PORT" >> $GITHUB_STEP_SUMMARY
+          echo "Password: password123" >> $GITHUB_STEP_SUMMARY
+          echo "====================================="
+          echo "SSH Host: $HOST"
+          echo "SSH Port: $PORT"
+          echo "User: root"
+          echo "Password: password123"
+          echo "====================================="
 
       - name: Keep VPS Alive
         run: sleep 21600
