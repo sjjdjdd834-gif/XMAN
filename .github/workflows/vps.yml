@@ -1,20 +1,25 @@
-name: One-Click VPS (tmate)
-on: [workflow_dispatch]
+name: GitHub VPS
+
+on: workflow_dispatch
 
 jobs:
-  ssh:
+  build:
     runs-on: ubuntu-latest
-    timeout-minutes: 360   # up to 6 hours
     steps:
-      - name: Prep machine
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Install tmate
         run: |
           sudo apt-get update
-          sudo apt-get install -y htop curl git
+          sudo apt-get install -y tmate
 
       - name: Start tmate session
-        uses: mxschmitt/action-tmate@v3
-        with:
-          limit-access-to-actor: false   # ✅ allows web terminal without GitHub SSH keys
+        run: |
+          tmate -S /tmp/tmate.sock new-session -d
+          tmate -S /tmp/tmate.sock wait tmate-ready
+          echo "SSH: $(tmate -S /tmp/tmate.sock display -p '#{tmate_ssh}')" >> $GITHUB_STEP_SUMMARY
+          echo "Web: $(tmate -S /tmp/tmate.sock display -p '#{tmate_web}')" >> $GITHUB_STEP_SUMMARY
 
       - name: Keep alive
-        run: sleep 21600
+        run: sleep 21600   # 6 hours
